@@ -107,6 +107,7 @@ import TopBar from "../components/TopBar";
 import Tabs from "../components/Tabs";
 import ResultView from "../components/ResultView";
 import { useLocalStorage } from "../hooks/useLocalStorage";
+import { apiFetch } from "../utils/api";
 
 export default function QuestionPage() {
   const { slug } = useParams();
@@ -130,7 +131,7 @@ export default function QuestionPage() {
     let cancelled = false;
 
     (async () => {
-      const res = await fetch(`/api/question/${slug}?lang=${lang}`);
+      const res = await apiFetch(`/api/question/${slug}?lang=${lang}`);
       const data = await res.json();
 
       if (cancelled) return;
@@ -167,45 +168,71 @@ export default function QuestionPage() {
   }, [code, autosave, codeKey, hydrated]);
 
   async function run() {
+    if (execState !== "idle") return;
+
+    setExecState("running");
     setMode("run");
     setTab("submission");
-    setResult("Running...");
+    setResult(null);
 
-    const res = await fetch("/api/run", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        slug,
-        questionId,
-        lang,
-        typed_code: code,
-        data_input: testcases,
-      }),
-    });
+    try {
+      const res = await apiFetch("/api/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          questionId,
+          lang,
+          typed_code: code,
+          data_input: testcases,
+        }),
+      });
 
-    const data = await res.json();
-    setResult(data.result);
+      const data = await res.json();
+      setResult(data.result);
+    } catch (err) {
+      setResult({
+        status_msg: "Runtime Error",
+        compile_error: err.message,
+      });
+    } finally {
+      setExecState("idle");
+    }
   }
+
 
   async function submit() {
+    if (execState !== "idle") return;
+
+    setExecState("submitting");
     setMode("submit");
     setTab("submission");
-    setResult("Submitting...");
+    setResult(null);
 
-    const res = await fetch("/api/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        slug,
-        questionId,
-        lang,
-        typed_code: code,
-      }),
-    });
+    try {
+      const res = await apiFetch("/api/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          questionId,
+          lang,
+          typed_code: code,
+        }),
+      });
 
-    const data = await res.json();
-    setResult(data.result);
+      const data = await res.json();
+      setResult(data.result);
+    } catch (err) {
+      setResult({
+        status_msg: "Runtime Error",
+        compile_error: err.message,
+      });
+    } finally {
+      setExecState("idle");
+    }
   }
+
 
   if (!question) return <div>Loading...</div>;
 
@@ -238,11 +265,11 @@ export default function QuestionPage() {
         <CodeEditor key={lang} language={lang} code={code} onChange={setCode} />
 
         <Console
-          output=""
           testcases={testcases}
           setTestcases={setTestcases}
           onRun={run}
           onSubmit={submit}
+          execState={execState}
         />
       </div>
     </div>

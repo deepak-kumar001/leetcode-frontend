@@ -1,20 +1,47 @@
+export default function Console({
+  testcases,
+  setTestcases,
+  onRun,
+  onSubmit,
+  execState,
+}) {
+  const running = execState === "running";
+  const submitting = execState === "submitting";
 
-export default function Console({ output, testcases, setTestcases, onRun, onSubmit }) {
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
-        <button onClick={onRun}>▶ Run</button>
-        <button onClick={onSubmit}>🚀 Submit</button>
+        <button onClick={onRun} disabled={running || submitting}>
+          {running ? "⏳ Running..." : "▶ Run"}
+        </button>
+
+        <button onClick={onSubmit} disabled={running || submitting}>
+          {submitting ? "⏳ Submitting..." : "🚀 Submit"}
+        </button>
       </div>
+
       <textarea
-        rows={4}
+        rows={6}
         placeholder="Custom testcases (optional)"
         value={testcases}
         onChange={(e) => setTestcases(e.target.value)}
+        disabled={running || submitting}
       />
-      <div style={{ flex: 1, background: "#0b0b0b", marginTop: 6, padding: 8 }}>
-        <pre>{output}</pre>
-      </div>
+
+      {(running || submitting) && (
+        <div
+          style={{
+            marginTop: 8,
+            padding: 8,
+            background: "#121212",
+            color: "#aaa",
+            fontStyle: "italic",
+          }}
+        >
+          {running && "Running your code..."}
+          {submitting && "Submitting your solution..."}
+        </div>
+      )}
     </div>
   );
 }
