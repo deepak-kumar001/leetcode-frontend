@@ -1,104 +1,3 @@
-
-// import { useParams } from "react-router-dom";
-// import { useEffect, useState } from "react";
-// import CodeEditor from "../components/CodeEditor";
-// import Console from "../components/Console";
-// import LanguageSelector from "../components/LanguageSelector";
-
-// export default function QuestionPage() {
-//   const { slug } = useParams();
-//   const [question, setQuestion] = useState(null);
-//   const [questionId, setQuestionId] = useState(null);
-//   const [lang, setLang] = useState("cpp");
-//   const [code, setCode] = useState("");
-//   const [testcases, setTestcases] = useState("");
-//   const [output, setOutput] = useState("");
-
-//   useEffect(() => {
-//     loadQuestion(lang);
-//   }, [slug, lang]);
-
-//   async function loadQuestion(language) {
-//     const res = await fetch(`/api/question/${slug}?lang=${language}`);
-//     const data = await res.json();
-//     setQuestion(data.question);
-//     setCode(data.question.template || "");
-//     setQuestionId(data.question.questionId);
-//     setTestcases(data.question.exampleTestcases || "");
-//     const template = data.question.codeSnippets?.forEach(element => {
-//       element.langSlug === lang && setCode(element.code);
-//     });
-//   }
-
-//   async function run() {
-//     setOutput("Running...");
-//     const res = await fetch("/api/run", {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({
-//         slug,
-//         questionId,
-//         lang,
-//         typed_code: code,
-//         data_input: testcases,
-//       }),
-//     });
-//     const data = await res.json();
-//     setOutput(JSON.stringify(data.result, null, 2));
-//   }
-
-//   async function submit() {
-//     setOutput("Submitting...");
-//     const res = await fetch("/api/submit", {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({
-//         slug,
-//         questionId,
-//         lang,
-//         typed_code: code,
-//       }),
-//     });
-//     const data = await res.json();
-//     setOutput(JSON.stringify(data.result, null, 2));
-//   }
-
-//   if (!question) return <div style={{ padding: 20 }}>Loading...</div>;
-
-//   return (
-//     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", height: "100vh" }}>
-//       <div style={{ padding: 16, overflow: "auto" }}>
-//         <h2>{question.title}</h2>
-//         <div><b>Difficulty:</b> {question.difficulty}</div>
-//         <div dangerouslySetInnerHTML={{ __html: question.content }} />
-//       </div>
-
-//       <div style={{ display: "grid", gridTemplateRows: "40px 1fr 250px" }}>
-//         <div style={{ padding: 6 }}>
-//           <LanguageSelector lang={lang} setLang={setLang} />
-//         </div>
-
-//         <CodeEditor
-//           language={lang === "cpp" ? "cpp" : lang}
-//           code={code}
-//           onChange={setCode}
-//         />
-
-//         <Console
-//           output={output}
-//           testcases={testcases}
-//           setTestcases={setTestcases}
-//           onRun={run}
-//           onSubmit={submit}
-//         />
-//       </div>
-//     </div>
-//   );
-// }
-
-
-
-
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import CodeEditor from "../components/CodeEditor";
@@ -123,6 +22,8 @@ export default function QuestionPage() {
   const [tab, setTab] = useState("question");
   const [mode, setMode] = useState(null); // "run" | "submit"
   const [execState, setExecState] = useState("idle"); // "idle" | "running" | "submitting"
+  const [snippets, setSnippets] = useState([]);
+  const [activeLang, setActiveLang] = useState(lang);
 
   const codeKey = `lc:code:${slug}:${lang}`;
 
@@ -131,24 +32,17 @@ export default function QuestionPage() {
     let cancelled = false;
 
     (async () => {
-      const res = await apiFetch(`/api/question/${slug}?lang=${lang}`);
+      const res = await apiFetch(`/api/question/${slug}`);
       const data = await res.json();
 
       if (cancelled) return;
 
       setQuestion(data.question);
       setTestcases(data.question.exampleTestcases || "");
-
-      const snippet = data.question.codeSnippets.find(
-        (el) => el.langSlug === lang
-      );
-
-      const template = snippet?.code || "";
-
-      const saved = localStorage.getItem(codeKey);
-      setCode(saved ? JSON.parse(saved) : template);
+      setSnippets(data.question.codeSnippets);
 
       setQuestionId(data.question.questionId);
+      setActiveLang(lang);
 
       // ✅ mark hydration complete
       setHydrated(true);
@@ -157,15 +51,31 @@ export default function QuestionPage() {
     return () => {
       cancelled = true;
     };
-  }, [slug, lang]);
+  }, [slug]);
+
+  useEffect(() => {
+    if (!snippets.length) return;
+
+    const snippet = snippets.find(s => s.langSlug === lang);
+    const template = snippet?.code || "";
+
+    const saved = localStorage.getItem(`lc:code:${slug}:${lang}`);
+    setCode(saved ? JSON.parse(saved) : template);
+
+    setActiveLang(lang);
+  }, [lang, snippets, slug]);
 
   // Autosave
   useEffect(() => {
-    if (!hydrated) return;     // 🔥 CRITICAL LINE
+    if (!hydrated) return; // CRITICAL LINE
     if (!autosave) return;
 
+    // 🔥 only save if editor language matches selected language
+    if (activeLang !== lang) return;
+
     localStorage.setItem(codeKey, JSON.stringify(code));
-  }, [code, autosave, codeKey, hydrated]);
+  }, [code, autosave, codeKey, hydrated, activeLang, lang]);
+
 
   async function run() {
     if (execState !== "idle") return;

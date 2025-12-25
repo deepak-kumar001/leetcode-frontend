@@ -20,7 +20,8 @@ export default function Console({
         </button>
       </div>
 
-      <textarea
+      <div style={{paddingLeft:3}}><strong>Testcases:</strong></div>
+      <textarea style={{ padding: 5 }}
         rows={6}
         placeholder="Custom testcases (optional)"
         value={testcases}
