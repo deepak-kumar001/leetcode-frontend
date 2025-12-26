@@ -7,6 +7,8 @@ import Tabs from "../components/Tabs";
 import ResultView from "../components/ResultView";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { apiFetch } from "../utils/api";
+import Footer from "../components/Footer";
+
 
 export default function QuestionPage() {
   const { slug } = useParams();
@@ -182,6 +184,7 @@ export default function QuestionPage() {
           execState={execState}
         />
       </div>
+      <Footer />
     </div>
   );
 }
