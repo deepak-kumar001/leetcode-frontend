@@ -8,6 +8,11 @@ import ResultView from "../components/ResultView";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { apiFetch } from "../utils/api";
 import Footer from "../components/Footer";
+import {
+  parseMetaData,
+  parseStructuredTestcases,
+  stringifyStructuredTestcases,
+} from "../utils/testcaseUtils";
 
 
 export default function QuestionPage() {
@@ -20,6 +25,9 @@ export default function QuestionPage() {
   const [code, setCode] = useState("");
   const [question, setQuestion] = useState(null);
   const [testcases, setTestcases] = useState("");
+  const [structuredCases, setStructuredCases] = useState([]);
+  const [meta, setMeta] = useState(null);
+
   const [result, setResult] = useState(null);
   const [tab, setTab] = useState("question");
   const [mode, setMode] = useState(null); // "run" | "submit"
@@ -45,6 +53,18 @@ export default function QuestionPage() {
 
       setQuestionId(data.question.questionId);
       setActiveLang(lang);
+
+      const metaParsed = parseMetaData(data.question.metaData);
+      setMeta(metaParsed);
+
+      if (data.question.exampleTestcaseList && metaParsed) {
+        const parsedCases = parseStructuredTestcases(
+          data.question.exampleTestcaseList,
+          metaParsed
+        );
+        setStructuredCases(parsedCases);
+      }
+
 
       // ✅ mark hydration complete
       setHydrated(true);
@@ -87,6 +107,10 @@ export default function QuestionPage() {
     setTab("submission");
     setResult(null);
 
+    const finalInput = structuredCases.length
+      ? stringifyStructuredTestcases(structuredCases)
+      : testcases;
+
     try {
       const res = await apiFetch("/api/run", {
         method: "POST",
@@ -96,7 +120,8 @@ export default function QuestionPage() {
           questionId,
           lang,
           typed_code: code,
-          data_input: testcases,
+          data_input: finalInput,
+          // data_input: textcases,
         }),
       });
 
@@ -166,7 +191,7 @@ export default function QuestionPage() {
       </div>
 
       {/* RIGHT */}
-      <div style={{ display: "grid", gridTemplateRows: "50px 1fr 250px" }}>
+      <div style={{ display: "grid", gridTemplateRows: "40px 1fr 250px" }}>
         <TopBar
           lang={lang}
           setLang={setLang}
@@ -177,12 +202,21 @@ export default function QuestionPage() {
         <CodeEditor key={lang} language={lang} code={code} onChange={setCode} />
 
         <Console
+          structuredCases={structuredCases}
+          setStructuredCases={setStructuredCases}
           testcases={testcases}
           setTestcases={setTestcases}
           onRun={run}
           onSubmit={submit}
           execState={execState}
         />
+        {/* <Console
+          testcases={testcases}
+          setTestcases={setTestcases}
+          onRun={run}
+          onSubmit={submit}
+          execState={execState}
+        /> */}
       </div>
       <Footer />
     </div>

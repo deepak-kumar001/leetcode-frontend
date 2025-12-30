@@ -20,3 +20,32 @@ select, textarea {
   border: 1px solid #333;
 }
 pre { white-space: pre-wrap; }
+
+
+/* ===== Global Dark Scrollbar ===== */
+
+/* Chrome, Edge, Brave, Safari */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f0f0f;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #2a2a2a;
+  border-radius: 8px;
+  border: 2px solid #0f0f0f;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #3a3a3a;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a2a #0f0f0f;
+}

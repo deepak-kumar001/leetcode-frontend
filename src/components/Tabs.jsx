@@ -1,6 +1,6 @@
 export default function Tabs({ active, setActive }) {
   return (
-    <div style={{ display: "flex", borderBottom: "1px solid #333" }}>
+    <div style={{ display: "flex", borderBottom: "1px solid #333", position: "sticky", top: 0, background: "#121212", zIndex: 10 }}>
       {["question", "submission"].map(tab => (
         <div
           key={tab}

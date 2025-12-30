@@ -1,4 +1,7 @@
+import TestcasePanel from "../components/TestcasePanel";
+
 export default function Console({
+  structuredCases,  setStructuredCases,
   testcases,
   setTestcases,
   onRun,
@@ -20,14 +23,30 @@ export default function Console({
         </button>
       </div>
 
-      <div style={{paddingLeft:3}}><strong>Testcases:</strong></div>
-      <textarea style={{ padding: 5 }}
+      <div style={{ borderBottom: "1px solid #333", paddingLeft: 3 }}><strong>Testcases:</strong></div>
+
+      {structuredCases.length > 0 ? (
+        <TestcasePanel
+          testcases={structuredCases}
+          setTestcases={setStructuredCases}
+        />
+
+      ) : (
+        <textarea style={{ padding: 5 }}
+          rows={6}
+          placeholder="Custom testcases (optional)"
+          value={testcases}
+          onChange={(e) => setTestcases(e.target.value)}
+          disabled={running || submitting}
+        />
+      )}
+      {/* <textarea style={{ padding: 5 }}
         rows={6}
         placeholder="Custom testcases (optional)"
         value={testcases}
         onChange={(e) => setTestcases(e.target.value)}
         disabled={running || submitting}
-      />
+      /> */}
 
       {(running || submitting) && (
         <div
