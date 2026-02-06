@@ -126,7 +126,7 @@ export default function QuestionPage() {
       });
 
       const data = await res.json();
-      setResult(data.result);
+      setResult(data.result ? data.result : data);
     } catch (err) {
       setResult({
         status_msg: "Runtime Error",
@@ -159,7 +159,7 @@ export default function QuestionPage() {
       });
 
       const data = await res.json();
-      setResult(data.result);
+      setResult(data.result ? data.result : data);
     } catch (err) {
       setResult({
         status_msg: "Runtime Error",
